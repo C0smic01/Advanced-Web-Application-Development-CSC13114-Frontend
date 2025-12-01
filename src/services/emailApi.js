@@ -2,12 +2,14 @@ import apiClient from "./apiClient";
 import { tokenManager } from "./apiClient";
 
 const emailApi = {
-  getThreads: async () => {
-    const response = await apiClient.get(
-      "/emails/threads?category=primary&size=20"
-    );
+  getThreads: async (page) => {
+    const url = `/emails/threads?category=primary&size=10${
+      page ? `&page=${page}` : ""
+    }`;
+    const response = await apiClient.get(url);
     return response.data;
   },
+
   getThreadById: async (id) => {
     if (id != "") {
       const response = await apiClient.get(`/emails/threads/${id}`);
@@ -21,6 +23,10 @@ const emailApi = {
   },
   modifyEmail: async (data) => {
     const response = await apiClient.post("/emails/messages/modify", data);
+    return response.data;
+  },
+  replyEmail: async (data) => {
+    const response = await apiClient.post("/emails/messages/reply", data);
     return response.data;
   },
 };

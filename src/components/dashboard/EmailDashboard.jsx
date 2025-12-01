@@ -237,7 +237,7 @@ const EmailDashboard = () => {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composeMode, setComposeMode] = useState({ type: "new", email: null });
   const [nextPageToken, setNextPageToken] = useState("");
-
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   useEffect(() => {
     const handleAuthTokens = async () => {
       try {
@@ -282,7 +282,14 @@ const EmailDashboard = () => {
     getThreadById();
   }, [selectedThreadId]);
   // Filter threads by mailbox based on labelIds
-
+  const handleMoreLoading = async () => {
+    if (!nextPageToken || isLoadingMore) return;
+    setIsLoadingMore(true);
+    const response = await emailApi.getThreads(nextPageToken);
+    setAllThreadsState([...allThreadsState, ...response.data.threads]);
+    setNextPageToken(response.data.nextPageToken || "");
+    setIsLoadingMore(false);
+  };
   const currentThreads = allThreadsState.filter((thread) => {
     const labels = thread.messages[0].labelIds || [];
     switch (selectedMailbox) {
@@ -303,19 +310,27 @@ const EmailDashboard = () => {
     }
   });
 
-  const handleToggleStar = (threadId) => {
+  const handleToggleStar = async (threadId, data) => {
     setAllThreadsState((prev) =>
       prev.map((thread) =>
         thread.id === threadId
           ? {
               ...thread,
-              labelIds: thread.labelIds?.includes("STARRED")
-                ? thread.labelIds.filter((l) => l !== "STARRED")
-                : [...(thread.labelIds || []), "STARRED"],
+              messages: thread.messages.map((msg, index) =>
+                index === 0
+                  ? {
+                      ...msg,
+                      labelIds: msg.labelIds?.includes("STARRED")
+                        ? msg.labelIds.filter((l) => l !== "STARRED")
+                        : [...(msg.labelIds || []), "STARRED"],
+                    }
+                  : msg
+              ),
             }
           : thread
       )
     );
+    await emailApi.modifyEmail(data);
   };
 
   const handleCloseDetail = () => {
@@ -358,19 +373,27 @@ const EmailDashboard = () => {
     alert("Email archived! 📦");
   };
 
-  const handleMarkAsRead = async (threadId, read) => {
+  const handleMarkAsRead = async (threadId, read, data) => {
     setAllThreadsState((prev) =>
-      prev.map((t) =>
-        t.id === threadId
+      prev.map((thread) =>
+        thread.id === threadId
           ? {
-              ...t,
-              labelIds: read
-                ? (t.labelIds || []).filter((l) => l !== "UNREAD")
-                : [...(t.labelIds || []), "UNREAD"],
+              ...thread,
+              messages: thread.messages.map((msg, index) =>
+                index === 0
+                  ? {
+                      ...msg,
+                      labelIds: read
+                        ? (msg.labelIds || []).filter((l) => l !== "UNREAD")
+                        : [...(msg.labelIds || []), "UNREAD"],
+                    }
+                  : msg
+              ),
             }
-          : t
+          : thread
       )
     );
+    await emailApi.modifyEmail(data);
   };
   const handleMarkAsRead2 = async (data) => {
     await emailApi.modifyEmail(data);
@@ -457,7 +480,10 @@ const EmailDashboard = () => {
             onToggleStar={handleToggleStar}
             onDeleteThread={handleDeleteThread}
             onArchiveThread={handleArchiveThread}
-            onMarkAsRead={handleMarkAsRead2}
+            onMarkAsRead={handleMarkAsRead}
+            handleMoreLoading={handleMoreLoading}
+            isMoreLoading={isLoadingMore}
+            hasMore={!!nextPageToken}
           />
         </div>
 

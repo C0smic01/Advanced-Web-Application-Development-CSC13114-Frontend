@@ -130,6 +130,12 @@ const ComposeModal = ({
     };
 
     onSend(newEmail);
+    setBody("");
+    setAttachments([]);
+    setSubject("");
+    setBcc([]);
+    setTo([]);
+    setCc([]);
     onClose();
   };
 
