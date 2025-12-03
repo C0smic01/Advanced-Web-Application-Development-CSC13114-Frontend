@@ -98,28 +98,9 @@ const ComposeModal = ({
     const gmailAttachments = attachments.map((a) => ({
       filename: a.name,
       content_type: a.mimeType,
-      data: a.data, // Base64 encoded
+      data: a.data,
     }));
 
-    // const newEmail = {
-    //   id: Date.now(),
-    //   from: "John Doe (me)",
-    //   email: "john@example.com",
-    //   to: to.join(", "),
-    //   cc: cc.join(", "),
-    //   bcc: bcc.join(", "),
-    //   subject,
-    //   preview: body.substring(0, 100) + "...",
-    //   body: `<p>${body.replace(/\n/g, "</p><p>")}</p>`,
-    //   timestamp: "Just now",
-    //   date: new Date().toISOString().split("T")[0],
-    //   starred: false,
-    //   read: true,
-    //   hasAttachments: attachments.length > 0,
-    //   attachments: gmailAttachments, // Gmail format with base64
-    // };
-
-    // Log để check format (bạn có thể xóa sau)
     const newEmail = {
       to: to,
       cc: cc,

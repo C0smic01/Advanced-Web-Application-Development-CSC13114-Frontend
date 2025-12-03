@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -107,9 +107,7 @@ const AuthForm = ({ mode, onSubmit, onGoogleSignIn }) => {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(isLogin ? loginSchema : signupSchema),
-    defaultValues: isLogin
-      ? { email: "demo@example.com", password: "password123" }
-      : {},
+    defaultValues: isLogin ? { email: "", password: "" } : {},
   });
 
   const [generalError, setGeneralError] = useState("");

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Paperclip, Image, FileText } from "lucide-react";
+import { X, Paperclip, Image, FileText, Loader2 } from "lucide-react";
 
 const ReplyBox = ({
   thread,
@@ -8,6 +8,7 @@ const ReplyBox = ({
   recipientEmail,
   onSend,
   onCancel,
+  isLoading = false,
 }) => {
   const [replyText, setReplyText] = useState("");
   const [replyAttachments, setReplyAttachments] = useState([]);
@@ -55,22 +56,18 @@ const ReplyBox = ({
     }));
     const refs = thread.messages.map((m) => m["message-id"]);
     const references = refs.reverse();
-    console.log("test: ", {
-      to: recipientEmail,
-      thread_id: thread.id,
-      message_id: thread.messages[replyingToIndex]["message-id"],
-      body: replyText,
-      attachments: gmailAttachments,
-      references: references,
-    });
+
+    // Only send the text user typed, not the original email HTML
     const data = {
       to: recipientEmail,
       thread_id: thread.id,
       message_id: thread.messages[replyingToIndex]["message-id"],
-      body: replyText,
+      body: replyText.trim(),
       attachments: gmailAttachments,
       references: references,
     };
+
+    console.log("Sending reply with only user text:", data);
     onSend(data);
 
     setReplyText("");
@@ -108,6 +105,7 @@ const ReplyBox = ({
           placeholder="Type your reply..."
           className="w-full min-h-[150px] outline-none text-[15px] text-gray-900 resize-none leading-relaxed border border-gray-300 rounded-lg p-3"
           autoFocus
+          disabled={isLoading}
         />
 
         {/* Attachments Display */}
@@ -153,29 +151,52 @@ const ReplyBox = ({
         <div className="flex items-center gap-2">
           <button
             onClick={handleSend}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors"
+            disabled={isLoading}
+            className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+              isLoading
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            } text-white`}
           >
             Send
           </button>
           <button
             onClick={handleCancelClick}
-            className="px-6 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg font-medium text-sm transition-colors"
+            disabled={isLoading}
+            className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-colors ${
+              isLoading
+                ? "text-gray-400 cursor-not-allowed"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
           >
             Cancel
           </button>
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+          <label
+            className={`p-2 rounded-lg transition-colors ${
+              isLoading
+                ? "cursor-not-allowed opacity-50"
+                : "hover:bg-gray-100 cursor-pointer"
+            }`}
+          >
             <Paperclip className="w-5 h-5 text-gray-600" />
             <input
               type="file"
               multiple
               onChange={handleFileSelect}
               className="hidden"
+              disabled={isLoading}
             />
           </label>
-          <label className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+          <label
+            className={`p-2 rounded-lg transition-colors ${
+              isLoading
+                ? "cursor-not-allowed opacity-50"
+                : "hover:bg-gray-100 cursor-pointer"
+            }`}
+          >
             <Image className="w-5 h-5 text-gray-600" />
             <input
               type="file"
@@ -183,6 +204,7 @@ const ReplyBox = ({
               multiple
               onChange={handleFileSelect}
               className="hidden"
+              disabled={isLoading}
             />
           </label>
         </div>

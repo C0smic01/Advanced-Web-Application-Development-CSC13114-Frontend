@@ -2,8 +2,7 @@ import axios, { AxiosError } from "axios";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:8080";
 // Biến lưu access token trong memory
-let accessToken = localStorage.getItem("access_token") || null;
-// let accessToken = null;
+let accessToken = null;
 
 let userDetail = null;
 // Axios instance
@@ -46,8 +45,18 @@ apiClient.interceptors.response.use(
         const response = await axios.post(`${SERVER_URL}/auth/refresh`, {
           refresh_token: refreshToken,
         });
-        const newAccessToken = response.data.newAccessToken;
+        console.log("Refresh token response:", response.data);
+        // Lấy access_token và refresh_token mới từ response
+        const newAccessToken = response.data.data.access_token;
+        const newRefreshToken = response.data.data.refresh_token;
+        console.log("newAccessToken:", newAccessToken);
+        console.log("newRefreshToken:", newRefreshToken);
+
+        // Lưu access token mới vào memory
         accessToken = newAccessToken;
+
+        // Lưu refresh token mới vào localStorage
+        localStorage.setItem("refresh_token", newRefreshToken);
 
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -57,7 +66,7 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // Refresh token hết hạn, logout user
         // localStorage.removeItem("refresh_token");
-        console.log(10000);
+
         accessToken = null;
         window.location.href = "/login";
         return Promise.reject(refreshError);

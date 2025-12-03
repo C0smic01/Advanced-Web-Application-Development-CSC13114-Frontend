@@ -23,6 +23,7 @@ const EmailList = ({
   onMarkAsRead,
   handleMoreLoading,
   isMoreLoading,
+  isInboxPage,
 }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,8 +95,8 @@ const EmailList = ({
     const observer = new IntersectionObserver(
       (entries) => {
         const firstEntry = entries[0];
-        // Sửa điều kiện: chỉ cần check isMoreLoading, không cần hasMore ở đây
-        if (firstEntry.isIntersecting && !isMoreLoading) {
+        // Chỉ load thêm khi là Inbox page
+        if (firstEntry.isIntersecting && !isMoreLoading && isInboxPage) {
           handleMoreLoading();
         }
       },
@@ -112,7 +113,7 @@ const EmailList = ({
         observer.unobserve(currentRef);
       }
     };
-  }, [isMoreLoading, handleMoreLoading]);
+  }, [isMoreLoading, handleMoreLoading, isInboxPage]);
 
   return (
     <div className="flex flex-col h-full border-r border-gray-200 bg-white">
@@ -187,7 +188,10 @@ const EmailList = ({
           const messageCount = thread.messages?.length || 0;
 
           const isUnread = firstMessage.labelIds?.includes("UNREAD");
-          const isStarred = firstMessage.labelIds?.includes("STARRED");
+          // Check if ANY message in the thread has STARRED label
+          const isStarred =
+            thread.messages?.some((msg) => msg.labelIds?.includes("STARRED")) ||
+            false;
 
           return (
             <div
@@ -212,24 +216,37 @@ const EmailList = ({
                     onClick={(e) => e.stopPropagation()}
                   />
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
-                      let data = {};
-                      if (thread.messages[0].labelIds.includes("STARRED")) {
-                        data = {
-                          email_id: thread.id,
-                          add: [],
-                          remove: ["STARRED"],
-                        };
+
+                      // Check if any message in thread has STARRED label
+                      const hasStarred = thread.messages?.some((msg) =>
+                        msg.labelIds?.includes("STARRED")
+                      );
+
+                      if (hasStarred) {
+                        // Remove STARRED from ALL messages in the thread
+                        const promises = thread.messages.map((msg) => {
+                          const data = {
+                            email_id: msg.id, // Use message id, not thread id
+                            add: [],
+                            remove: ["STARRED"],
+                          };
+                          return onToggleStar(msg.id, data);
+                        });
+
+                        await Promise.all(promises);
                       } else {
-                        data = {
-                          email_id: thread.id,
+                        // Add STARRED to the last message only
+                        const lastMessage =
+                          thread.messages[thread.messages.length - 1];
+                        const data = {
+                          email_id: lastMessage.id, // Use message id, not thread id
                           add: ["STARRED"],
                           remove: [],
                         };
+                        await onToggleStar(lastMessage.id, data);
                       }
-
-                      onToggleStar(thread.id, data);
                     }}
                     className="transition-colors"
                   >

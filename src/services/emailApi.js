@@ -29,5 +29,19 @@ const emailApi = {
     const response = await apiClient.post("/emails/messages/reply", data);
     return response.data;
   },
+  forwardEmail: async (data) => {
+    const response = await apiClient.post("/emails/messages/forward", data);
+    return response.data;
+  },
+  getAttachment: async (messageId, id) => {
+    const response = await apiClient.get(
+      `/emails/attachments?message-id=${messageId}&id=${id}`
+    );
+    return response.data;
+  },
+  deleteEmail: async (id) => {
+    const response = await apiClient.delete(`/emails/messages/${id}`);
+    return response.data;
+  },
 };
 export default emailApi;

@@ -3,11 +3,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // import { LoginPage } from "./components/auth/LoginPage";
-import { PrivateRoute } from "./components/auth/PrivateRoute";
+
 import EmailDashboard from "./components/dashboard/EmailDashboard";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/Signup";
-import SvgLocation from "./pages/Test";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -24,11 +26,16 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
-            <Route path="/test" element={<SvgLocation />} />
+            {/* <Route path="/access" element={<AccessCallback />} /> */}
 
-            <Route path="/" element={<EmailDashboard />} />
-            {/* <Route path="/" element={<Navigate to="/inbox" replace />} />
-            <Route path="*" element={<Navigate to="/inbox" replace />} /> */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <EmailDashboard />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

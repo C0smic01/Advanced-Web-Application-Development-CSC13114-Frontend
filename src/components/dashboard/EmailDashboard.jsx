@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import {
   Mail,
   Star,
@@ -10,7 +11,6 @@ import {
   MoreVertical,
   Paperclip,
   Inbox,
-  ChevronLeft,
   X,
   Bold,
   Italic,
@@ -24,19 +24,15 @@ import ComposeModal from "../modal/ComposeModal";
 import EmailDetail from "./EmailDetail";
 import EmailList from "./EmailList";
 import Sidebar from "./Sidebar";
-import apiClient, { tokenManager, userManager } from "../../services/apiClient";
-import authApi from "../../services/authApi";
 import emailApi from "../../services/emailApi";
 import Swal from "sweetalert2";
-// Mock Data by Mailbox
-const mockMailboxes = [
-  { id: "inbox", name: "Inbox", icon: Inbox, unread: 12, color: "blue" },
-  { id: "starred", name: "Starred", icon: Star, unread: 3, color: "yellow" },
-  { id: "sent", name: "Sent", icon: Send, unread: 0, color: "green" },
-  { id: "drafts", name: "Drafts", icon: FileText, unread: 2, color: "gray" },
-  { id: "archive", name: "Archive", icon: Archive, unread: 0, color: "purple" },
-  { id: "trash", name: "Trash", icon: Trash2, unread: 0, color: "red" },
-];
+import useAuthTokens from "../../hooks/useAuthTokens";
+import useFetchThreads from "../../hooks/useFetchThreads";
+import {
+  setAllThreadsState,
+  setNextPageToken,
+  appendThreads,
+} from "../../redux/threadSlice";
 
 // Compose Modal Component
 
@@ -227,51 +223,162 @@ const handleSchedule = () => {
 
 // EmailDashboard.jsx
 const EmailDashboard = () => {
+  const dispatch = useDispatch();
+  const allThreadsState = useSelector((state) => state.threads.allThreadsState);
+  const nextPageToken = useSelector((state) => state.threads.nextPageToken);
+
   const [selectedMailbox, setSelectedMailbox] = useState("inbox");
   const [selectedThread, setSelectedThread] = useState(null);
   const [selectedThreadId, setSelectedThreadId] = useState("");
-  const [reset, setReset] = useState(false);
-  const [allThreadsState, setAllThreadsState] = useState([]);
+  // const [reset, setReset] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [showEmailList, setShowEmailList] = useState(true);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composeMode, setComposeMode] = useState({ type: "new", email: null });
-  const [nextPageToken, setNextPageToken] = useState("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Use custom hooks
+  useAuthTokens();
+  useFetchThreads();
+
+  // Reset selected thread when mailbox changes
   useEffect(() => {
-    const handleAuthTokens = async () => {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const accessToken = urlParams.get("access_token");
-        const refreshToken = urlParams.get("refresh_token");
+    // Filter threads for current mailbox
+    const currentThreads = allThreadsState.filter((thread) => {
+      const labels =
+        thread?.messages?.flatMap((msg) => msg.labelIds || []) || [];
+      const uniqueLabels = [...new Set(labels)];
 
-        if (accessToken && refreshToken) {
-          tokenManager.token = accessToken;
-          localStorage.setItem("refresh_token", refreshToken);
-          localStorage.setItem("access_token", accessToken);
-
-          const response = await authApi.getProfile();
-          userManager.user = response.data;
-
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, newUrl);
-        }
-      } catch (error) {
-        console.error("Error handling auth tokens:", error);
+      switch (selectedMailbox) {
+        case "inbox":
+          return uniqueLabels.includes("INBOX");
+        case "starred":
+          return uniqueLabels.includes("STARRED");
+        case "sent":
+          return uniqueLabels.includes("SENT");
+        case "drafts":
+          return uniqueLabels.includes("DRAFT");
+        case "archive":
+          return (
+            !uniqueLabels.includes("INBOX") && !uniqueLabels.includes("TRASH")
+          );
+        case "trash":
+          return uniqueLabels.includes("TRASH");
+        default:
+          return uniqueLabels.includes("INBOX");
       }
+    });
+
+    // Reset to first thread or null if no threads
+    if (currentThreads.length > 0) {
+      setSelectedThread(currentThreads[0]);
+      setSelectedThreadId(currentThreads[0].id);
+    } else {
+      setSelectedThread(null);
+      setSelectedThreadId("");
+    }
+
+    // Show email list on mobile when changing mailbox
+    setShowEmailList(true);
+  }, [selectedMailbox, allThreadsState]);
+
+  // Calculate unread count for each mailbox dynamically
+  const calculateUnreadCounts = () => {
+    const counts = {
+      inbox: 0,
+      starred: 0,
+      sent: 0,
+      drafts: 0,
+      archive: 0,
+      trash: 0,
     };
 
-    handleAuthTokens();
-  }, []);
+    allThreadsState.forEach((thread) => {
+      // Check if the FIRST message in thread is unread
+      const firstMessage = thread.messages?.[0];
+      const isUnread = firstMessage?.labelIds?.includes("UNREAD");
 
-  useEffect(() => {
-    const fetchThreads = async () => {
-      const response = await emailApi.getThreads();
-      setAllThreadsState(response.data.threads || []);
-      setNextPageToken(response.data.nextPageToken || "");
-    };
-    fetchThreads();
-  }, [reset]);
+      // Get all unique labels from all messages in thread
+      const labels =
+        thread?.messages?.flatMap((msg) => msg.labelIds || []) || [];
+      const uniqueLabels = [...new Set(labels)];
+
+      // Count unread threads for each mailbox
+      if (isUnread) {
+        if (uniqueLabels.includes("INBOX")) {
+          counts.inbox++;
+        }
+        if (uniqueLabels.includes("STARRED")) {
+          counts.starred++;
+        }
+        if (uniqueLabels.includes("SENT")) {
+          counts.sent++;
+        }
+        if (uniqueLabels.includes("DRAFT")) {
+          counts.drafts++;
+        }
+        if (
+          !uniqueLabels.includes("INBOX") &&
+          !uniqueLabels.includes("TRASH")
+        ) {
+          counts.archive++;
+        }
+        if (uniqueLabels.includes("TRASH")) {
+          counts.trash++;
+        }
+      }
+    });
+
+    return counts;
+  };
+
+  const unreadCounts = calculateUnreadCounts();
+
+  // Create mailboxes with dynamic unread counts
+  const mailboxes = [
+    {
+      id: "inbox",
+      name: "Inbox",
+      icon: Inbox,
+      unread: unreadCounts.inbox,
+      color: "blue",
+    },
+    {
+      id: "starred",
+      name: "Starred",
+      icon: Star,
+      unread: unreadCounts.starred,
+      color: "yellow",
+    },
+    {
+      id: "sent",
+      name: "Sent",
+      icon: Send,
+      unread: unreadCounts.sent,
+      color: "green",
+    },
+    {
+      id: "drafts",
+      name: "Drafts",
+      icon: FileText,
+      unread: unreadCounts.drafts,
+      color: "gray",
+    },
+    {
+      id: "archive",
+      name: "Archive",
+      icon: Archive,
+      unread: unreadCounts.archive,
+      color: "purple",
+    },
+    {
+      id: "trash",
+      name: "Trash",
+      icon: Trash2,
+      unread: unreadCounts.trash,
+      color: "red",
+    },
+  ];
 
   useEffect(() => {
     const getThreadById = async () => {
@@ -286,50 +393,76 @@ const EmailDashboard = () => {
     if (!nextPageToken || isLoadingMore) return;
     setIsLoadingMore(true);
     const response = await emailApi.getThreads(nextPageToken);
-    setAllThreadsState([...allThreadsState, ...response.data.threads]);
-    setNextPageToken(response.data.nextPageToken || "");
+    dispatch(appendThreads(response.data.threads));
+    dispatch(setNextPageToken(response.data.nextPageToken || ""));
     setIsLoadingMore(false);
   };
   const currentThreads = allThreadsState.filter((thread) => {
-    const labels = thread.messages[0].labelIds || [];
+    // Lấy tất cả labels từ tất cả messages trong thread
+    const labels = thread?.messages?.flatMap((msg) => msg.labelIds || []) || [];
+    const uniqueLabels = [...new Set(labels)]; // Loại bỏ trùng lặp
+
     switch (selectedMailbox) {
       case "inbox":
-        return labels.includes("INBOX");
+        return uniqueLabels.includes("INBOX");
       case "starred":
-        return labels.includes("STARRED");
+        return uniqueLabels.includes("STARRED");
       case "sent":
-        return labels.includes("SENT");
+        return uniqueLabels.includes("SENT");
       case "drafts":
-        return labels.includes("DRAFT");
+        return uniqueLabels.includes("DRAFT");
       case "archive":
-        return !labels.includes("INBOX") && !labels.includes("TRASH");
+        return (
+          !uniqueLabels.includes("INBOX") && !uniqueLabels.includes("TRASH")
+        );
       case "trash":
-        return labels.includes("TRASH");
+        return uniqueLabels.includes("TRASH");
       default:
-        return labels.includes("INBOX");
+        return uniqueLabels.includes("INBOX");
     }
   });
 
-  const handleToggleStar = async (threadId, data) => {
-    setAllThreadsState((prev) =>
-      prev.map((thread) =>
-        thread.id === threadId
-          ? {
-              ...thread,
-              messages: thread.messages.map((msg, index) =>
-                index === 0
-                  ? {
-                      ...msg,
-                      labelIds: msg.labelIds?.includes("STARRED")
-                        ? msg.labelIds.filter((l) => l !== "STARRED")
-                        : [...(msg.labelIds || []), "STARRED"],
-                    }
-                  : msg
-              ),
+  const handleToggleStar = async (messageId, data) => {
+    // Update Redux state immediately (optimistic update)
+    const updatedThreads = allThreadsState.map((thread) => {
+      // Check if this thread contains the message
+      const hasMessage = thread.messages.some((msg) => msg.id === messageId);
+
+      if (hasMessage) {
+        return {
+          ...thread,
+          messages: thread.messages.map((msg) => {
+            if (msg.id === messageId) {
+              // Update this specific message's labels
+              let newLabelIds = [...(msg.labelIds || [])];
+
+              if (data.add.includes("STARRED")) {
+                // Add STARRED if not already there
+                if (!newLabelIds.includes("STARRED")) {
+                  newLabelIds.push("STARRED");
+                }
+              }
+
+              if (data.remove.includes("STARRED")) {
+                // Remove STARRED
+                newLabelIds = newLabelIds.filter((l) => l !== "STARRED");
+              }
+
+              return {
+                ...msg,
+                labelIds: newLabelIds,
+              };
             }
-          : thread
-      )
-    );
+            return msg;
+          }),
+        };
+      }
+      return thread;
+    });
+
+    dispatch(setAllThreadsState(updatedThreads));
+
+    // Then call API
     await emailApi.modifyEmail(data);
   };
 
@@ -338,34 +471,75 @@ const EmailDashboard = () => {
     setSelectedThread(null);
   };
 
-  const handleDeleteThread = (threadId) => {
+  const handleDeleteThread = async (threadId) => {
     if (confirm("Are you sure you want to delete this email?")) {
-      setAllThreadsState((prev) =>
-        prev.map((t) =>
-          t.id === threadId
-            ? { ...t, labelIds: [...(t.labelIds || []), "TRASH"] }
-            : t
-        )
-      );
+      // Find the thread to get its messages
+      const thread = allThreadsState.find((t) => t.id === threadId);
+      if (!thread) return;
+
+      // Update Redux state immediately (optimistic update)
+      const updatedThreads = allThreadsState.map((t) => {
+        if (t.id === threadId) {
+          return {
+            ...t,
+            messages: t.messages.map((msg) => {
+              let newLabelIds = [...(msg.labelIds || [])];
+              // Add TRASH label if not already there
+              if (!newLabelIds.includes("TRASH")) {
+                newLabelIds.push("TRASH");
+              }
+              // Remove INBOX, STARRED, UNREAD labels
+              newLabelIds = newLabelIds.filter(
+                (label) => !["INBOX", "STARRED", "UNREAD"].includes(label)
+              );
+              return {
+                ...msg,
+                labelIds: newLabelIds,
+              };
+            }),
+          };
+        }
+        return t;
+      });
+
+      dispatch(setAllThreadsState(updatedThreads));
+
+      // Close detail view if this thread is selected
       if (selectedThread?.id === threadId) {
         setSelectedThread(null);
         setShowEmailList(true);
       }
-      alert("Email moved to trash! 🗑️");
+
+      // Call API for each message in the thread
+      try {
+        await Promise.all(
+          thread.messages.map((message) => {
+            const data = {
+              email_id: message.id,
+              add: ["TRASH"],
+              remove: ["INBOX", "STARRED", "UNREAD"],
+            };
+            return emailApi.modifyEmail(data);
+          })
+        );
+        alert("Email moved to trash! 🗑️");
+      } catch (error) {
+        console.error("Error deleting thread:", error);
+        alert("Failed to delete email. Please try again.");
+      }
     }
   };
 
   const handleArchiveThread = (threadId) => {
-    setAllThreadsState((prev) =>
-      prev.map((t) =>
-        t.id === threadId
-          ? {
-              ...t,
-              labelIds: (t.labelIds || []).filter((l) => l !== "INBOX"),
-            }
-          : t
-      )
+    const updatedThreads = allThreadsState.map((t) =>
+      t.id === threadId
+        ? {
+            ...t,
+            labelIds: (t.labelIds || []).filter((l) => l !== "INBOX"),
+          }
+        : t
     );
+    dispatch(setAllThreadsState(updatedThreads));
     if (selectedThread?.id === threadId) {
       setSelectedThread(null);
       setShowEmailList(true);
@@ -374,31 +548,27 @@ const EmailDashboard = () => {
   };
 
   const handleMarkAsRead = async (threadId, read, data) => {
-    setAllThreadsState((prev) =>
-      prev.map((thread) =>
-        thread.id === threadId
-          ? {
-              ...thread,
-              messages: thread.messages.map((msg, index) =>
-                index === 0
-                  ? {
-                      ...msg,
-                      labelIds: read
-                        ? (msg.labelIds || []).filter((l) => l !== "UNREAD")
-                        : [...(msg.labelIds || []), "UNREAD"],
-                    }
-                  : msg
-              ),
-            }
-          : thread
-      )
+    const updatedThreads = allThreadsState.map((thread) =>
+      thread.id === threadId
+        ? {
+            ...thread,
+            messages: thread.messages.map((msg, index) =>
+              index === 0
+                ? {
+                    ...msg,
+                    labelIds: read
+                      ? (msg.labelIds || []).filter((l) => l !== "UNREAD")
+                      : [...(msg.labelIds || []), "UNREAD"],
+                  }
+                : msg
+            ),
+          }
+        : thread
     );
+    dispatch(setAllThreadsState(updatedThreads));
     await emailApi.modifyEmail(data);
   };
-  const handleMarkAsRead2 = async (data) => {
-    await emailApi.modifyEmail(data);
-    setReset(!reset);
-  };
+
   const handleMarkAsUnread = (threadId) => {
     handleMarkAsRead(threadId, false);
     alert("Marked as unread! 📧");
@@ -465,7 +635,7 @@ const EmailDashboard = () => {
           isMobileSidebarOpen={isMobileSidebarOpen}
           onCloseMobileSidebar={() => setIsMobileSidebarOpen(false)}
           onCompose={handleCompose}
-          mockMailboxes={mockMailboxes}
+          mockMailboxes={mailboxes}
         />
 
         <div
@@ -484,6 +654,7 @@ const EmailDashboard = () => {
             handleMoreLoading={handleMoreLoading}
             isMoreLoading={isLoadingMore}
             hasMore={!!nextPageToken}
+            isInboxPage={selectedMailbox == "inbox" ? true : false}
           />
         </div>
 

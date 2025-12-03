@@ -1,8 +1,4 @@
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Mail, Lock, AlertCircle, User } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AuthForm from "../components/auth/AuthForm";
 import authApi from "../services/authApi";
@@ -11,26 +7,21 @@ import { useMutation } from "@tanstack/react-query";
 const LoginPage = () => {
   const navigate = useNavigate();
   const loginMutation = useMutation({
-    mutationFn: (email, password) => authApi.login(email, password),
+    mutationFn: (data) => authApi.login(data.email, data.password),
     onSuccess: (data) => {
-      console.log("data: ", data);
-      if (data.success) {
-        Swal.fire("Thành công !", data.message, "success");
+      if (data.code == 200) {
+        Swal.fire("Success!", "Login successful!", "success");
       } else {
-        Swal.fire("Thất bại !", data.message, "error");
+        Swal.fire("Failed!", "Login failed. Please try again!", "error");
       }
 
-      if (data.success) {
-        navigate("/home");
+      if (data.code == 200) {
+        navigate("/");
       }
     },
     onError: (error) => {
       console.log("Login error:", error);
-      Swal.fire(
-        "Thất bại !",
-        error.message || "Đăng nhập thất bại. Vui lòng thử lại!",
-        "error"
-      );
+      Swal.fire("Failed!", "Login failed. Please try again!", "error");
     },
   });
   const handleLogin = (data) => {
@@ -39,7 +30,6 @@ const LoginPage = () => {
   const loginGoogleMutation = useMutation({
     mutationFn: () => authApi.loginGoogle(),
     onSuccess: (data) => {
-      console.log("data: ", data);
       window.location.href = data;
     },
     onError: (error) => {
@@ -68,10 +58,10 @@ const LoginPage = () => {
             <Mail className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-3xl font-bold mb-1.5 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Chào mừng trở lại
+            Welcome Back
           </h1>
           <p className="text-slate-600 text-base">
-            Đăng nhập để truy cập email của bạn
+            Sign in to access your email
           </p>
         </div>
 
@@ -84,12 +74,12 @@ const LoginPage = () => {
         </div>
 
         <p className="text-center mt-5 text-slate-600 text-sm">
-          Chưa có tài khoản?{" "}
+          Don't have an account?{" "}
           <button
             className="text-blue-600 hover:text-blue-700 font-semibold"
             onClick={() => navigate("/signup")}
           >
-            Đăng ký miễn phí
+            Sign up for free
           </button>
         </p>
       </div>

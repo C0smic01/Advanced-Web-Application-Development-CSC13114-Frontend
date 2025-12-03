@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import AuthForm from "../components/auth/AuthForm";
 import { useMutation } from "@tanstack/react-query";
 import authApi from "../services/authApi";
+import Swal from "sweetalert2";
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -14,20 +15,20 @@ const SignupPage = () => {
   const registerMutation = useMutation({
     mutationFn: (data) => authApi.register(data),
     onSuccess: (data) => {
-      if (data.success) {
-        Swal.fire("Thành công !", data.message, "success");
+      if (data.code == 200) {
+        Swal.fire("Success!", data.message, "success");
         setTimeout(() => {
           navigate("/login");
         }, 1500);
       } else {
-        Swal.fire("Thất bại !", data.message, "error");
+        Swal.fire("Failed!", data.message, "error");
       }
     },
     onError: (error) => {
       console.error("Registration error:", error);
       Swal.fire(
-        "Thất bại !",
-        error.message || "Đăng nhập thất bại. Vui lòng thử lại!",
+        "Failed!",
+        error.message || "Registration failed. Please try again!",
         "error"
       );
     },
@@ -40,7 +41,7 @@ const SignupPage = () => {
 
   const handleGoogleSignIn = async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    alert("Đăng ký Google thành công!");
+    alert("Google sign up successful!");
   };
 
   return (
@@ -61,11 +62,9 @@ const SignupPage = () => {
             <User className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-3xl font-bold mb-1.5 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Tạo tài khoản
+            Create Account
           </h1>
-          <p className="text-gray-600 text-base">
-            Bắt đầu hành trình của bạn với chúng tôi
-          </p>
+          <p className="text-gray-600 text-base">Start your journey with us</p>
         </div>
 
         <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl p-6 border border-white/20">
@@ -77,12 +76,12 @@ const SignupPage = () => {
         </div>
 
         <p className="text-center mt-5 text-gray-600 text-sm">
-          Đã có tài khoản?{" "}
+          Already have an account?{" "}
           <button
             className="text-blue-600 hover:text-blue-700 font-semibold"
             onClick={() => navigate("/login")}
           >
-            Đăng nhập ngay
+            Sign in now
           </button>
         </p>
       </div>
