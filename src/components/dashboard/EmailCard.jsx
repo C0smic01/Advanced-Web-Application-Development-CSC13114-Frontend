@@ -28,17 +28,17 @@ const EmailCard = ({ item, isDragging, isGhost, style }) => {
       <div className="flex items-start gap-3 mb-4">
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-semibold text-sm shrink-0 shadow-lg"
-          style={{ backgroundColor: item.avatarBg }}
+          style={{ backgroundColor: "#c0c0c0" }}
         >
-          {item.avatar}
+          {item.from?.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <h4 className="font-semibold text-gray-900 text-sm truncate">
-              {item.sender}
+              {item.from}
             </h4>
             <span className="text-xs text-gray-400 whitespace-nowrap">
-              {item.time}
+              {item.date}
             </span>
           </div>
           <p className="text-sm font-medium text-gray-800 mt-1 line-clamp-1">

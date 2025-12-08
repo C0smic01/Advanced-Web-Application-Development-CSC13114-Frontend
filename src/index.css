@@ -2,22 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+.scrollbar-always::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-always::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  margin: 8px 0;
+}
+
+.scrollbar-always::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #a78bfa 0%, #8b5cf6 100%);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.scrollbar-always::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.scrollbar-always::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+/* Firefox scrollbar */
+.scrollbar-always {
+  scrollbar-width: thin;
+  scrollbar-color: #a78bfa rgba(0, 0, 0, 0.05);
+}
+
 @layer base {
   * {
     @apply border-slate-200;
   }
-  
+
   body {
     @apply bg-slate-50 text-slate-900 font-sans antialiased;
     min-height: 100vh;
   }
-  
+
   #root {
     @apply min-h-screen;
   }
 }
 
 @layer components {
+
   /* Custom Scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
@@ -71,33 +102,34 @@
 }
 
 @layer utilities {
+
   /* Animation delays */
   .animation-delay-100 {
     animation-delay: 100ms;
   }
-  
+
   .animation-delay-200 {
     animation-delay: 200ms;
   }
-  
+
   .animation-delay-300 {
     animation-delay: 300ms;
   }
-  
+
   .animation-delay-400 {
     animation-delay: 400ms;
   }
-  
+
   .animation-delay-500 {
     animation-delay: 500ms;
   }
 
   /* Text shadow utilities */
   .text-shadow {
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .text-shadow-lg {
-    text-shadow: 0 4px 8px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
   }
 }
