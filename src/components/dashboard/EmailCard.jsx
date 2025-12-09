@@ -1,6 +1,21 @@
 import { Sparkles, ExternalLink, Bell, MoreHorizontal } from "lucide-react";
+import taskApi from "../../services/taskApi";
+import SnoozeTimePicker from "./SnoozeTimePicker";
+import { useState } from "react";
 
-const EmailCard = ({ item, isDragging, isGhost, style }) => {
+const EmailCard = ({ threadId, item, isDragging, isGhost, style }) => {
+  console.log("EmailCard rendered with item:", threadId);
+  const [isOpenSnooze, setIsOpenSnooze] = useState(false);
+  const handleSnooze = async (snooze_time_in_seconds) => {
+    const data = {
+      thread_id: threadId,
+      snooze_time_in_seconds: snooze_time_in_seconds.snooze_time_in_seconds,
+      send_at: new Date(item.date).toISOString(),
+    };
+    console.log("Snooze data:", data);
+    const response = await taskApi.updateStatusTask({ data });
+    console.log("Snooze response:", response);
+  };
   return (
     <div
       className={`
@@ -55,12 +70,15 @@ const EmailCard = ({ item, isDragging, isGhost, style }) => {
           </span>
         </div>
         <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
-          {item.summary}
+          {item.summary || item.snippet}
         </p>
       </div>
 
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-        <button className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-amber-500 transition-colors">
+        <button
+          onClick={() => setIsOpenSnooze(true)}
+          className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-amber-500 transition-colors"
+        >
           <Bell className="w-3.5 h-3.5" />
           <span>Snooze</span>
         </button>
@@ -73,6 +91,14 @@ const EmailCard = ({ item, isDragging, isGhost, style }) => {
       <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
         <MoreHorizontal className="w-4 h-4 text-gray-300" />
       </div>
+      {isOpenSnooze && (
+        <SnoozeTimePicker
+          isOpen={isOpenSnooze}
+          onClose={() => setIsOpenSnooze(false)}
+          onSnooze={handleSnooze}
+          emailSubject={item.subject}
+        />
+      )}
     </div>
   );
 };

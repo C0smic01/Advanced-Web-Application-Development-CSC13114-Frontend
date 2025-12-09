@@ -1124,114 +1124,101 @@
 //   );
 // }
 
-import React, { useState, useRef } from "react";
+// const emailTasksInbox = [
+//   {
+//     threadId: "thread-1",
+//     messages: [
+//       {
+//         messageId: "1",
+//         from: "Google Cloud Platform aaa",
+//         to: "user@example.com",
+//         subject: "Invoice for October 2023 is available",
+//         summary:
+//           "Hóa đơn dịch vụ Cloud tháng 10. Tổng tiền: $150.00. Cần thanh toán trước ngày 25/11 để tránh gián đoạn dịch vụ.",
+//         date: "10:30 AM",
+//       },
+//       {
+//         messageId: "10",
+//         from: "Google Cloud Platform bbb",
+//         to: "user@example.com",
+//         subject: "Invoice for October 2023 is available",
+//         summary:
+//           "Hóa đơn dịch vụ Cloud tháng 10. Tổng tiền: $150.00. Cần thanh toán trước ngày 25/11 để tránh gián đoạn dịch vụ.",
+//         date: "10:30 AM",
+//       },
+//     ],
+//   },
+//   {
+//     threadId: "thread-2",
+//     messages: [
+//       {
+//         messageId: "2",
+//         from: "Nguyễn Văn A (Team Lead)",
+//         to: "user@example.com",
+//         subject: "Re: Cập nhật tiến độ dự án Mobile App",
+//         summary:
+//           "Yêu cầu gọi lại bản thiết kế UI mới nhất trước 4h chiều nay để review với khách hàng. Nhắc nhở team fix lỗi API đăng nhập.",
+//         date: "9:15 AM",
+//       },
+//     ],
+//   },
+//   {
+//     threadId: "thread-3",
+//     messages: [
+//       {
+//         messageId: "3",
+//         from: "Trần Thị B (HR)",
+//         to: "user@example.com",
+//         subject: "Thông báo: Họp team building tháng 11",
+//         summary:
+//           "Sự kiện team building dự kiến tổ chức vào cuối tháng 11. Địa điểm: Resort Vũng Tàu. Thời gian: 2 ngày 1 đêm.",
+//         date: "Yesterday",
+//       },
+//     ],
+//   },
+// ];
+
+// const emailTasksTodo = [
+//   {
+//     threadId: "thread-4",
+//     messages: [
+//       {
+//         messageId: "4",
+//         from: "GitHub",
+//         to: "user@example.com",
+//         subject: "Security alert: New sign-in from Windows device",
+//         summary:
+//           "Phát hiện đăng nhập mới từ thiết bị Windows tại TP.HCM. Nếu không phải bạn, vui lòng thay đổi mật khẩu ngay.",
+//         date: "2 days ago",
+//       },
+//     ],
+//   },
+// ];
+
+// const emailTasksDone = [
+//   {
+//     threadId: "thread-5",
+//     messages: [
+//       {
+//         messageId: "5",
+//         from: "Netflix",
+//         to: "user@example.com",
+//         subject: "New releases this week - Don't miss out!",
+//         summary:
+//           "Discover exciting new movies and TV shows added to Netflix this week. Including action, drama and comedy series.",
+//         date: "3 days ago",
+//       },
+//     ],
+//   },
+// ];
+
+import React, { useState, useRef, useEffect } from "react";
 import { Mail, Clock, CheckCircle2, MoreHorizontal } from "lucide-react";
 import EmailCard from "../components/dashboard/EmailCard";
 import Header from "../components/dashboard/Header";
 import { useSelector } from "react-redux";
-
-const emailTasksInbox = [
-  {
-    threadId: "thread-1",
-    messages: [
-      {
-        messageId: "1",
-        from: "Google Cloud Platform",
-        to: "user@example.com",
-        subject: "Invoice for October 2023 is available",
-        summary:
-          "Hóa đơn dịch vụ Cloud tháng 10. Tổng tiền: $150.00. Cần thanh toán trước ngày 25/11 để tránh gián đoạn dịch vụ.",
-        date: "10:30 AM",
-      },
-    ],
-  },
-  {
-    threadId: "thread-2",
-    messages: [
-      {
-        messageId: "2",
-        from: "Nguyễn Văn A (Team Lead)",
-        to: "user@example.com",
-        subject: "Re: Cập nhật tiến độ dự án Mobile App",
-        summary:
-          "Yêu cầu gọi lại bản thiết kế UI mới nhất trước 4h chiều nay để review với khách hàng. Nhắc nhở team fix lỗi API đăng nhập.",
-        date: "9:15 AM",
-      },
-    ],
-  },
-  {
-    threadId: "thread-3",
-    messages: [
-      {
-        messageId: "3",
-        from: "Trần Thị B (HR)",
-        to: "user@example.com",
-        subject: "Thông báo: Họp team building tháng 11",
-        summary:
-          "Sự kiện team building dự kiến tổ chức vào cuối tháng 11. Địa điểm: Resort Vũng Tàu. Thời gian: 2 ngày 1 đêm.",
-        date: "Yesterday",
-      },
-    ],
-  },
-];
-
-const emailTasksTodo = [
-  {
-    threadId: "thread-4",
-    messages: [
-      {
-        messageId: "4",
-        from: "GitHub",
-        to: "user@example.com",
-        subject: "Security alert: New sign-in from Windows device",
-        summary:
-          "Phát hiện đăng nhập mới từ thiết bị Windows tại TP.HCM. Nếu không phải bạn, vui lòng thay đổi mật khẩu ngay.",
-        date: "2 days ago",
-      },
-    ],
-  },
-];
-
-const emailTasksDone = [
-  {
-    threadId: "thread-5",
-    messages: [
-      {
-        messageId: "5",
-        from: "Netflix",
-        to: "user@example.com",
-        subject: "New releases this week - Don't miss out!",
-        summary:
-          "Discover exciting new movies and TV shows added to Netflix this week. Including action, drama and comedy series.",
-        date: "3 days ago",
-      },
-    ],
-  },
-];
-
-const initialData = {
-  inbox: {
-    id: "inbox",
-    title: "INBOX",
-    icon: Mail,
-    color: "#ef4444",
-    items: emailTasksInbox,
-  },
-  todo: {
-    id: "todo",
-    title: "TO DO",
-    icon: Clock,
-    color: "#f59e0b",
-    items: emailTasksTodo,
-  },
-  done: {
-    id: "done",
-    title: "DONE",
-    icon: CheckCircle2,
-    color: "#22c55e",
-    items: emailTasksDone,
-  },
-};
+import useGetAllTasks from "../hooks/useFetchTask";
+import taskApi from "../services/taskApi";
 
 function DraggableItem({
   thread,
@@ -1344,7 +1331,8 @@ function Column({
 }
 
 export default function EmailKanbanBoard() {
-  const [columns, setColumns] = useState(initialData);
+  // const temp = useSelector((state) => state.threads.allThreadsState);
+
   const [draggedItem, setDraggedItem] = useState(null);
   const ghostPositionRef = useRef({ x: 0, y: 0 });
   const [dragOverColumn, setDragOverColumn] = useState(null);
@@ -1354,7 +1342,43 @@ export default function EmailKanbanBoard() {
   const cardHeight = useRef(0);
   const ghostWrapperRef = useRef(null);
   const dragOffset = useRef({ x: 0, y: 0 });
+  const emailTasksInbox = useSelector((state) => state.tasks.emailTasksInbox);
+  const emailTasksTodo = useSelector((state) => state.tasks.emailTasksTodo);
+  const emailTasksDone = useSelector((state) => state.tasks.emailTasksDone);
+  console.log("Inbox tasks:", emailTasksInbox);
+  const initialData = {
+    inbox: {
+      id: "inbox",
+      title: "INBOX",
+      icon: Mail,
+      color: "#ef4444",
+      items: emailTasksInbox,
+    },
+    todo: {
+      id: "to-do",
+      title: "TO DO",
+      icon: Clock,
+      color: "#f59e0b",
+      items: emailTasksTodo,
+    },
+    done: {
+      id: "done",
+      title: "DONE",
+      icon: CheckCircle2,
+      color: "#22c55e",
+      items: emailTasksDone,
+    },
+  };
+  const [columns, setColumns] = useState(initialData);
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const { fetchAllTasks, loading, error } = useGetAllTasks();
+  // const loading = false;
+  // const error = false;
+
+  useEffect(() => {
+    fetchAllTasks();
+  }, []);
 
   const handleDragStart = (e, thread, columnId, index, element) => {
     const rect = element.getBoundingClientRect();
@@ -1499,7 +1523,7 @@ export default function EmailKanbanBoard() {
     setTransforms(newTransforms);
   };
 
-  const handleDrop = (e, targetColumnId) => {
+  const handleDrop = async (e, targetColumnId) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -1546,7 +1570,13 @@ export default function EmailKanbanBoard() {
 
       return newColumns;
     });
-
+    await taskApi.updateStatusTask({
+      threadId: thread.threadId,
+      sent_at: new Date(
+        thread.messages[thread.messages.length - 1].date
+      ).toISOString(),
+      status: targetColumnId,
+    });
     setDraggedItem(null);
     setDragOverColumn(null);
     setDragOverIndex(null);
@@ -1582,7 +1612,11 @@ export default function EmailKanbanBoard() {
     setTransforms({});
   };
 
-  return (
+  return loading ? (
+    <p>loading...</p>
+  ) : error ? (
+    <p>Error: {error}</p>
+  ) : (
     <div
       className="h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-gray-50 to-stone-100"
       onDragEnd={handleDragEnd}
@@ -1632,6 +1666,7 @@ export default function EmailKanbanBoard() {
           }}
         >
           <EmailCard
+            threadId={draggedItem.thread.threadId}
             item={
               draggedItem.thread.messages[
                 draggedItem.thread.messages.length - 1
