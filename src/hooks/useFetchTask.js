@@ -19,19 +19,28 @@ const useGetAllTasks = () => {
 
       const [inboxData, todoData, doneData] = await Promise.all([
         taskApi.getTaskInbox(),
-        taskApi.getTaskOfStatus("to-do"),
-        taskApi.getTaskOfStatus("done"),
+        taskApi.getTaskOfStatus("TODO"),
+        taskApi.getTaskOfStatus("DONE"),
       ]);
 
-      dispatch(
-        setEmailTasksInbox(inboxData.mailTasks.map((task) => task.thread))
-      );
-      dispatch(
-        setEmailTasksTodo(todoData.mailTasks.map((task) => task.thread))
-      );
-      dispatch(
-        setEmailTasksDone(doneData.mailTasks.map((task) => task.thread))
-      );
+      // Helper function to add summary to last message of each thread
+      const addSummaryToThreads = (tasks) => {
+        return tasks.map((task) => {
+          const thread = task.thread;
+          if (thread.messages && thread.messages.length > 0) {
+            const lastMessageIndex = thread.messages.length - 1;
+            thread.messages[lastMessageIndex] = {
+              ...thread.messages[lastMessageIndex],
+              summary: task.summary || "No summary available",
+            };
+          }
+          return thread;
+        });
+      };
+
+      dispatch(setEmailTasksInbox(addSummaryToThreads(inboxData.mailTasks)));
+      dispatch(setEmailTasksTodo(addSummaryToThreads(todoData.mailTasks)));
+      dispatch(setEmailTasksDone(addSummaryToThreads(doneData.mailTasks)));
 
       return { inbox: inboxData, todo: todoData, done: doneData };
     } catch (err) {

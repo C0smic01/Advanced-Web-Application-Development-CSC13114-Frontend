@@ -9,13 +9,13 @@ const taskSlice = createSlice({
   },
   reducers: {
     setEmailTasksInbox: (state, action) => {
-      state.emailTasksInbox = [...state.emailTasksInbox, ...action.payload];
+      state.emailTasksInbox = action.payload;
     },
     setEmailTasksTodo: (state, action) => {
-      state.emailTasksTodo = [...state.emailTasksTodo, ...action.payload];
+      state.emailTasksTodo = action.payload;
     },
     setEmailTasksDone: (state, action) => {
-      state.emailTasksDone = [...state.emailTasksDone, ...action.payload];
+      state.emailTasksDone = action.payload;
     },
   },
 });

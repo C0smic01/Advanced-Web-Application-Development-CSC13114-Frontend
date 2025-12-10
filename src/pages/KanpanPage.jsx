@@ -1213,12 +1213,13 @@
 // ];
 
 import React, { useState, useRef, useEffect } from "react";
-import { Mail, Clock, CheckCircle2, MoreHorizontal } from "lucide-react";
+import { Mail, Clock, CheckCircle2, MoreHorizontal, Bell } from "lucide-react";
 import EmailCard from "../components/dashboard/EmailCard";
 import Header from "../components/dashboard/Header";
 import { useSelector } from "react-redux";
 import useGetAllTasks from "../hooks/useFetchTask";
 import taskApi from "../services/taskApi";
+import SnoozeModal from "../components/modal/SnoozeModal";
 
 function DraggableItem({
   thread,
@@ -1240,7 +1241,7 @@ function DraggableItem({
       onDragStart={(e) =>
         onDragStart(e, thread, columnId, index, itemRef.current)
       }
-      data-item-id={thread.threadId}
+      data-item-id={thread.id}
       style={{
         transform: transform ? `translate3d(0, ${transform}px, 0)` : "none",
         transition: isDragging
@@ -1248,7 +1249,12 @@ function DraggableItem({
           : "transform 300ms cubic-bezier(0.2, 0, 0, 1)",
       }}
     >
-      <EmailCard item={lastMessage} isDragging={isDragging} />
+      <EmailCard
+        threadId={thread.id}
+        item={lastMessage}
+        thread={thread}
+        isDragging={isDragging}
+      />
     </div>
   );
 }
@@ -1316,7 +1322,7 @@ function Column({
       >
         {column.items.map((thread, index) => (
           <DraggableItem
-            key={thread.threadId}
+            key={thread.id}
             thread={thread}
             columnId={column.id}
             index={index}
@@ -1346,39 +1352,110 @@ export default function EmailKanbanBoard() {
   const emailTasksTodo = useSelector((state) => state.tasks.emailTasksTodo);
   const emailTasksDone = useSelector((state) => state.tasks.emailTasksDone);
   console.log("Inbox tasks:", emailTasksInbox);
-  const initialData = {
+  // const initialData = {
+  //   inbox: {
+  //     id: "inbox",
+  //     title: "INBOX",
+  //     icon: Mail,
+  //     color: "#ef4444",
+  //     items: emailTasksInbox,
+  //   },
+  //   todo: {
+  //     id: "to-do",
+  //     title: "TO DO",
+  //     icon: Clock,
+  //     color: "#f59e0b",
+  //     items: emailTasksTodo,
+  //   },
+  //   done: {
+  //     id: "done",
+  //     title: "DONE",
+  //     icon: CheckCircle2,
+  //     color: "#22c55e",
+  //     items: emailTasksDone,
+  //   },
+  // };
+  const [columns, setColumns] = useState({
     inbox: {
       id: "inbox",
       title: "INBOX",
       icon: Mail,
       color: "#ef4444",
-      items: emailTasksInbox,
+      items: [],
     },
     todo: {
-      id: "to-do",
+      id: "todo",
       title: "TO DO",
       icon: Clock,
       color: "#f59e0b",
-      items: emailTasksTodo,
+      items: [],
     },
     done: {
       id: "done",
       title: "DONE",
       icon: CheckCircle2,
       color: "#22c55e",
-      items: emailTasksDone,
+      items: [],
     },
-  };
-  const [columns, setColumns] = useState(initialData);
+  });
 
+  // Chỉ load data từ Redux một lần khi component mount
+  const isInitializedRef = useRef(false);
+  useEffect(() => {
+    if (
+      !isInitializedRef.current &&
+      (emailTasksInbox.length > 0 ||
+        emailTasksTodo.length > 0 ||
+        emailTasksDone.length > 0)
+    ) {
+      setColumns((prev) => ({
+        ...prev,
+        inbox: { ...prev.inbox, items: emailTasksInbox },
+        todo: { ...prev.todo, items: emailTasksTodo },
+        done: { ...prev.done, items: emailTasksDone },
+      }));
+      isInitializedRef.current = true;
+    }
+  }, [emailTasksInbox, emailTasksTodo, emailTasksDone]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { fetchAllTasks, loading, error } = useGetAllTasks();
   // const loading = false;
   // const error = false;
 
+  // Snooze modal state
+  const [isSnoozeModalOpen, setIsSnoozeModalOpen] = useState(false);
+  const [snoozeEmails, setSnoozeEmails] = useState([]);
+  const [loadingSnooze, setLoadingSnooze] = useState(false);
+
   useEffect(() => {
     fetchAllTasks();
   }, []);
+
+  const handleOpenSnoozeModal = async () => {
+    setIsSnoozeModalOpen(true);
+    setLoadingSnooze(true);
+    try {
+      const response = await taskApi.getTaskSnooze();
+      // Helper function to add summary to last message of each thread
+      const snoozeThreads = response.mailTasks.map((task) => {
+        const thread = task.thread;
+        if (thread.messages && thread.messages.length > 0) {
+          const lastMessageIndex = thread.messages.length - 1;
+          thread.messages[lastMessageIndex] = {
+            ...thread.messages[lastMessageIndex],
+            summary: task.summary || "No summary available",
+          };
+        }
+        return thread;
+      });
+      setSnoozeEmails(snoozeThreads);
+    } catch (err) {
+      console.error("Failed to fetch snooze emails:", err);
+      setSnoozeEmails([]);
+    } finally {
+      setLoadingSnooze(false);
+    }
+  };
 
   const handleDragStart = (e, thread, columnId, index, element) => {
     const rect = element.getBoundingClientRect();
@@ -1533,6 +1610,7 @@ export default function EmailKanbanBoard() {
     if (!draggedItem) return;
 
     const { thread, sourceColumn, sourceIndex } = draggedItem;
+
     const insertIndex =
       dragOverIndex !== null
         ? dragOverIndex
@@ -1571,11 +1649,11 @@ export default function EmailKanbanBoard() {
       return newColumns;
     });
     await taskApi.updateStatusTask({
-      threadId: thread.threadId,
-      sent_at: new Date(
+      thread_id: thread.id,
+      send_at: new Date(
         thread.messages[thread.messages.length - 1].date
       ).toISOString(),
-      status: targetColumnId,
+      status: targetColumnId.toUpperCase(),
     });
     setDraggedItem(null);
     setDragOverColumn(null);
@@ -1634,6 +1712,16 @@ export default function EmailKanbanBoard() {
       <Header setIsMobileSidebarOpen={setIsMobileSidebarOpen} />
       <main className="relative z-10 p-6 h-[calc(100vh-96px)]">
         <div className="w-full max-w-[98%] mx-auto h-full">
+          {/* Snooze Button */}
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={handleOpenSnoozeModal}
+              className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 transform"
+            >
+              <Bell className="w-5 h-5 group-hover:animate-bounce" />
+              <span>View Snoozed Emails</span>
+            </button>
+          </div>
           <div className="grid grid-cols-3 gap-6 h-full overflow-hidden">
             {Object.values(columns).map((column) => (
               <Column
@@ -1666,16 +1754,25 @@ export default function EmailKanbanBoard() {
           }}
         >
           <EmailCard
-            threadId={draggedItem.thread.threadId}
+            threadId={draggedItem.thread.id}
             item={
               draggedItem.thread.messages[
                 draggedItem.thread.messages.length - 1
               ]
             }
+            thread={draggedItem.thread}
             isGhost={true}
           />
         </div>
       )}
+
+      {/* Snooze Modal */}
+      <SnoozeModal
+        isOpen={isSnoozeModalOpen}
+        onClose={() => setIsSnoozeModalOpen(false)}
+        snoozeEmails={snoozeEmails}
+        loading={loadingSnooze}
+      />
     </div>
   );
 }

@@ -27,5 +27,13 @@ const taskApi = {
       throw error;
     }
   },
+  getTaskSnooze: async () => {
+    try {
+      const response = await apiClient.get("/tasks/processing?status=SNOOZED");
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 export default taskApi;

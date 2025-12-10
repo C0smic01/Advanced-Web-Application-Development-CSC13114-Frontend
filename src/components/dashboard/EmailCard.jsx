@@ -1,19 +1,22 @@
 import { Sparkles, ExternalLink, Bell, MoreHorizontal } from "lucide-react";
 import taskApi from "../../services/taskApi";
 import SnoozeTimePicker from "./SnoozeTimePicker";
+import EmailModal from "../modal/EmailModal";
 import { useState } from "react";
 
-const EmailCard = ({ threadId, item, isDragging, isGhost, style }) => {
+const EmailCard = ({ threadId, item, thread, isDragging, isGhost, style }) => {
   console.log("EmailCard rendered with item:", threadId);
   const [isOpenSnooze, setIsOpenSnooze] = useState(false);
+  const [isOpenEmailModal, setIsOpenEmailModal] = useState(false);
   const handleSnooze = async (snooze_time_in_seconds) => {
     const data = {
       thread_id: threadId,
       snooze_time_in_seconds: snooze_time_in_seconds.snooze_time_in_seconds,
       send_at: new Date(item.date).toISOString(),
+      status: "SNOOZED",
     };
     console.log("Snooze data:", data);
-    const response = await taskApi.updateStatusTask({ data });
+    const response = await taskApi.updateStatusTask(data);
     console.log("Snooze response:", response);
   };
   return (
@@ -82,7 +85,10 @@ const EmailCard = ({ threadId, item, isDragging, isGhost, style }) => {
           <Bell className="w-3.5 h-3.5" />
           <span>Snooze</span>
         </button>
-        <button className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-blue-500 transition-colors">
+        <button
+          onClick={() => setIsOpenEmailModal(true)}
+          className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-blue-500 transition-colors"
+        >
           <span>Open Mail</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </button>
@@ -97,6 +103,13 @@ const EmailCard = ({ threadId, item, isDragging, isGhost, style }) => {
           onClose={() => setIsOpenSnooze(false)}
           onSnooze={handleSnooze}
           emailSubject={item.subject}
+        />
+      )}
+      {isOpenEmailModal && (
+        <EmailModal
+          thread={thread}
+          isOpen={isOpenEmailModal}
+          setIsOpen={setIsOpenEmailModal}
         />
       )}
     </div>
