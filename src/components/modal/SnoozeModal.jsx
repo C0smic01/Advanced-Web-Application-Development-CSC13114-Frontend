@@ -73,6 +73,7 @@ export default function SnoozeModal({
                       item={lastMessage}
                       thread={thread}
                       isDragging={false}
+                      isSnoozed={false}
                     />
                   </div>
                 );
@@ -82,16 +83,6 @@ export default function SnoozeModal({
         </div>
 
         {/* Footer */}
-        {!loading && snoozeEmails.length > 0 && (
-          <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4">
-            <button
-              onClick={onClose}
-              className="w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium rounded-lg hover:from-orange-600 hover:to-amber-600 transition-all shadow-lg"
-            >
-              Close
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

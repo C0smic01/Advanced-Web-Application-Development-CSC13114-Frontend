@@ -59,7 +59,6 @@ const taskSlice = createSlice({
       }
     },
 
-    // Set loading state cho một type
     setLoadingForType: (state, action) => {
       const { typeName, loading } = action.payload;
       const mailIndex = state.mails.findIndex((m) => m.name === typeName);
@@ -68,7 +67,6 @@ const taskSlice = createSlice({
       }
     },
 
-    // Set error cho một type
     setErrorForType: (state, action) => {
       const { typeName, error } = action.payload;
       const mailIndex = state.mails.findIndex((m) => m.name === typeName);
@@ -77,7 +75,6 @@ const taskSlice = createSlice({
       }
     },
 
-    // Thêm một type mới
     addNewListType: (state, action) => {
       const { typeName, icon, color } = action.payload;
       if (!state.listTypes.includes(typeName)) {
@@ -95,7 +92,6 @@ const taskSlice = createSlice({
       }
     },
 
-    // Remove một type
     removeListType: (state, action) => {
       const typeName = action.payload;
       state.listTypes = state.listTypes.filter((t) => t !== typeName);
@@ -138,6 +134,38 @@ const taskSlice = createSlice({
       }
     },
 
+    // Remove thread from a type
+    removeThreadFromType: (state, action) => {
+      const { typeName, threadId } = action.payload;
+      // Convert to uppercase to match Redux state format
+      const upperTypeName = typeName.toUpperCase();
+      const mailIndex = state.mails.findIndex((m) => m.name === upperTypeName);
+      console.log(
+        "In reducer - removeThreadFromType:",
+        typeName,
+        "=>",
+        upperTypeName,
+        threadId,
+        "mailIndex:",
+        mailIndex
+      );
+      if (mailIndex !== -1) {
+        const filteredThreads = state.mails[mailIndex].threads.filter(
+          (t) => t.id !== threadId
+        );
+        console.log(
+          "Before filter:",
+          state.mails[mailIndex].threads.length,
+          "After filter:",
+          filteredThreads.length
+        );
+        state.mails[mailIndex] = {
+          ...state.mails[mailIndex],
+          threads: filteredThreads,
+        };
+      }
+    },
+
     // Reset all data
     resetAllTasks: (state) => {
       state.mails = state.mails.map((mail) => ({
@@ -162,5 +190,6 @@ export const {
   removeListType,
   updateThreadInType,
   moveThreadBetweenTypes,
+  removeThreadFromType,
   resetAllTasks,
 } = taskSlice.actions;

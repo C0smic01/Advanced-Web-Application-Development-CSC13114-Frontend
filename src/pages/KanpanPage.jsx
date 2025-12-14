@@ -52,6 +52,7 @@ function DraggableItem({
         item={lastMessage}
         thread={thread}
         isDragging={isDragging}
+        columnId={columnId}
       />
     </div>
   );
@@ -349,7 +350,23 @@ export default function EmailKanbanBoard() {
   const dragOffset = useRef({ x: 0, y: 0 });
 
   const listTypes = useSelector((state) => state.tasks.listTypes);
-  const mails = useSelector((state) => state.tasks.mails);
+  const mails = useSelector(
+    (state) => state.tasks.mails,
+    (a, b) => {
+      // Custom equality check - always return false to force re-render for debugging
+      const isEqual = JSON.stringify(a) === JSON.stringify(b);
+      console.log("useSelector equality check:", isEqual);
+      return isEqual;
+    }
+  );
+
+  // Debug: Log when mails changes
+  useEffect(() => {
+    console.log(
+      "Mails from Redux updated:",
+      mails.map((m) => ({ name: m.name, threadsCount: m.threads.length }))
+    );
+  }, [mails]);
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { fetchAllTasks, fetchTasksForType, loading, error } = useGetAllTasks();
@@ -433,6 +450,7 @@ export default function EmailKanbanBoard() {
   }, [localColumns, sortConfig, filterConfig]);
 
   useEffect(() => {
+    console.log("Updating localColumns from mails...");
     const updatedColumns = mails.map((mail) => {
       const iconConfig = iconMapping[mail.name] || {
         icon: Mail,
@@ -451,6 +469,10 @@ export default function EmailKanbanBoard() {
         error: mail.error,
       };
     });
+    console.log(
+      "LocalColumns updated:",
+      updatedColumns.map((c) => ({ id: c.id, itemsCount: c.items.length }))
+    );
     setLocalColumns(updatedColumns);
   }, [mails]);
 

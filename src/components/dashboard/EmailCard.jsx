@@ -3,11 +3,27 @@ import taskApi from "../../services/taskApi";
 import SnoozeTimePicker from "./SnoozeTimePicker";
 import EmailModal from "../modal/EmailModal";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { removeThreadFromType } from "../../redux/taskSlice";
 
-const EmailCard = ({ threadId, item, thread, isDragging, isGhost, style }) => {
+const EmailCard = ({
+  threadId,
+  item,
+  thread,
+  isDragging,
+  isGhost,
+  style,
+  isSnoozed = true,
+  columnId,
+}) => {
+  const dispatch = useDispatch();
   const [isOpenSnooze, setIsOpenSnooze] = useState(false);
   const [isOpenEmailModal, setIsOpenEmailModal] = useState(false);
   const handleSnooze = async (snooze_time_in_seconds) => {
+    if (columnId) {
+      dispatch(removeThreadFromType({ typeName: columnId, threadId }));
+    }
+
     const data = {
       thread_id: threadId,
       snooze_time_in_seconds: snooze_time_in_seconds.snooze_time_in_seconds,
@@ -15,7 +31,7 @@ const EmailCard = ({ threadId, item, thread, isDragging, isGhost, style }) => {
       status: "SNOOZED",
     };
 
-    const response = await taskApi.updateStatusTask(data);
+    await taskApi.updateStatusTask(data);
   };
   return (
     <div
@@ -76,13 +92,16 @@ const EmailCard = ({ threadId, item, thread, isDragging, isGhost, style }) => {
       </div>
 
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-        <button
-          onClick={() => setIsOpenSnooze(true)}
-          className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-amber-500 transition-colors"
-        >
-          <Bell className="w-3.5 h-3.5" />
-          <span>Snooze</span>
-        </button>
+        {isSnoozed && (
+          <button
+            onClick={() => setIsOpenSnooze(true)}
+            className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-amber-500 transition-colors"
+          >
+            <Bell className="w-3.5 h-3.5" />
+            <span>Snooze</span>
+          </button>
+        )}
+
         <button
           onClick={() => setIsOpenEmailModal(true)}
           className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-blue-500 transition-colors"

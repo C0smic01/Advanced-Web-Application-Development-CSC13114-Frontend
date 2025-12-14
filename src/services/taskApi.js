@@ -39,7 +39,9 @@ const taskApi = {
   // Get snoozed tasks
   getTaskSnooze: async () => {
     try {
-      const response = await apiClient.get("/tasks/processing?status=SNOOZED");
+      const response = await apiClient.get(
+        "/tasks/processing?status=SNOOZED&size=50"
+      );
       return response.data.data;
     } catch (error) {
       throw error;
