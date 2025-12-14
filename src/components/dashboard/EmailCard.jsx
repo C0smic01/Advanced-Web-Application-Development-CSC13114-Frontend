@@ -5,7 +5,6 @@ import EmailModal from "../modal/EmailModal";
 import { useState } from "react";
 
 const EmailCard = ({ threadId, item, thread, isDragging, isGhost, style }) => {
-  console.log("EmailCard rendered with item:", threadId);
   const [isOpenSnooze, setIsOpenSnooze] = useState(false);
   const [isOpenEmailModal, setIsOpenEmailModal] = useState(false);
   const handleSnooze = async (snooze_time_in_seconds) => {
@@ -15,9 +14,8 @@ const EmailCard = ({ threadId, item, thread, isDragging, isGhost, style }) => {
       send_at: new Date(item.date).toISOString(),
       status: "SNOOZED",
     };
-    console.log("Snooze data:", data);
+
     const response = await taskApi.updateStatusTask(data);
-    console.log("Snooze response:", response);
   };
   return (
     <div

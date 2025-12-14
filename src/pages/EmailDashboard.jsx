@@ -38,8 +38,8 @@ import Header from "../components/dashboard/Header";
 // Compose Modal Component
 
 const handleSchedule = () => {
-  alert("Email scheduled for later! ⏰");
-  onClose();
+  // alert("Email scheduled for later! ⏰");
+  // onClose();
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -205,7 +205,7 @@ const handleSchedule = () => {
               Send
             </button>
             <button
-              onClick={handleSchedule}
+              // onClick={handleSchedule}
               className="px-4 py-2.5 border border-gray-300 hover:bg-gray-50 rounded-lg font-medium flex items-center gap-2 transition-colors"
             >
               <Clock className="w-4 h-4" />
@@ -241,9 +241,7 @@ const EmailDashboard = () => {
   useAuthTokens();
   useFetchThreads();
 
-  // Reset selected thread when mailbox changes
   useEffect(() => {
-    // Filter threads for current mailbox
     const currentThreads = allThreadsState.filter((thread) => {
       const labels =
         thread?.messages?.flatMap((msg) => msg.labelIds || []) || [];

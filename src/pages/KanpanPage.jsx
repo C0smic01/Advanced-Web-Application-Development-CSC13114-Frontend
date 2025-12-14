@@ -82,9 +82,7 @@ function Column({
   useEffect(() => {
     isLoadingRef.current = column.loading;
     if (!column.loading) {
-      console.log(
-        `✅ ${column.name} loading done, isLoadingRef reset to false`
-      );
+      console.log(`${column.name} loading done, isLoadingRef reset to false`);
     }
   }, [column.loading, column.name]);
 
@@ -107,7 +105,7 @@ function Column({
           !isLoadingRef.current
         ) {
           console.log(
-            `🔄 Intersection triggered for ${column.name}, token:`,
+            `Intersection triggered for ${column.name}, token:`,
             column.nextPageToken
           );
           isLoadingRef.current = true;
@@ -156,7 +154,6 @@ function Column({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          {/* Sort by Time */}
           <button
             onClick={() => onSortChange(column.id, "time")}
             className={`p-2 hover:bg-gray-100 rounded-lg transition-colors ${
@@ -182,7 +179,6 @@ function Column({
             )}
           </button>
 
-          {/* Sort by Sender */}
           <button
             onClick={() => onSortChange(column.id, "sender")}
             className={`p-2 hover:bg-gray-100 rounded-lg transition-colors relative ${
@@ -210,7 +206,6 @@ function Column({
             )}
           </button>
 
-          {/* Filter Button */}
           <div className="relative">
             <button
               onClick={() => setShowFilterMenu(!showFilterMenu)}
@@ -229,7 +224,6 @@ function Column({
               )}
             </button>
 
-            {/* Filter Dropdown */}
             {showFilterMenu && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 p-3">
                 <div className="space-y-3">
@@ -273,7 +267,6 @@ function Column({
             )}
           </div>
 
-          {/* Clear Filters Button */}
           {hasActiveFilters && (
             <button
               onClick={() => onFilterChange(column.id, "clear")}
@@ -333,11 +326,11 @@ function Column({
           <div ref={loadMoreRef} className="h-4" />
         )}
 
-        {!column.nextPageToken && column.items.length > 0 && (
+        {/* {!column.nextPageToken && column.items.length > 0 && (
           <div className="text-center py-2 text-xs text-gray-400">
             ✓ All items loaded
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
@@ -476,13 +469,9 @@ export default function EmailKanbanBoard() {
         mail.nextPageToken.trim() &&
         !mail.loading
       ) {
-        console.log(
-          `🔄 Loading more for ${typeName} with token:`,
-          mail.nextPageToken
-        );
         fetchTasksForType(typeName, mail.nextPageToken);
       } else {
-        console.log(`⛔ Cannot load more for ${typeName}:`, {
+        console.log(`Cannot load more for ${typeName}:`, {
           hasNextPageToken: !!mail?.nextPageToken,
           isLoading: mail?.loading,
         });
@@ -522,13 +511,10 @@ export default function EmailKanbanBoard() {
       let newValue = null;
 
       if (!current || current.type !== sortType) {
-        // Chưa có sort hoặc đang sort type khác -> sort tăng dần
         newValue = { type: sortType, direction: "asc" };
       } else if (current.direction === "asc") {
-        // Đang sort tăng dần -> chuyển sang giảm dần
         newValue = { type: sortType, direction: "desc" };
       } else {
-        // Đang sort giảm dần -> về mặc định (null)
         newValue = null;
       }
 
@@ -631,7 +617,7 @@ export default function EmailKanbanBoard() {
     if (!draggedItem || !columnElement) return;
 
     const columnRect = columnElement.getBoundingClientRect();
-    // ✅ FIX: Thêm scrollTop để tính toán đúng vị trí khi scroll
+
     const scrollTop = columnElement.scrollTop;
     const mouseY = e.clientY - columnRect.top + scrollTop - 12;
 
@@ -850,9 +836,15 @@ export default function EmailKanbanBoard() {
   };
 
   return loading ? (
-    <p>loading...</p>
+    <>
+      <Header setIsMobileSidebarOpen={setIsMobileSidebarOpen} />
+      <p>loading...</p>
+    </>
   ) : error ? (
-    <p>Error: {error}</p>
+    <>
+      <Header setIsMobileSidebarOpen={setIsMobileSidebarOpen} />
+      <p>Error: {error}</p>
+    </>
   ) : (
     <div
       className="h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-gray-50 to-stone-100"
@@ -867,8 +859,8 @@ export default function EmailKanbanBoard() {
           }}
         />
       </div>
-
       <Header setIsMobileSidebarOpen={setIsMobileSidebarOpen} />
+
       <main className="relative z-10 px-6 py-3 h-[calc(100vh-96px)]">
         <div className="w-full max-w-[98%] mx-auto h-full">
           <div className="mb-2 flex justify-end">

@@ -27,11 +27,10 @@ const ForwardBox = ({ thread, forwardingMessage, onSend, onCancel }) => {
   const [toInput, setToInput] = useState("");
   const [ccInput, setCcInput] = useState("");
   const [bccInput, setBccInput] = useState("");
-  const [bodyText, setBodyText] = useState(""); // Full HTML content that user can edit
+  const [bodyText, setBodyText] = useState("");
   const [attachments, setAttachments] = useState([]);
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
   const toInputRef = useRef(null);
@@ -46,18 +45,15 @@ const ForwardBox = ({ thread, forwardingMessage, onSend, onCancel }) => {
     }
   }, []);
 
-  // Prepare forwarded message content with full HTML and attachments
   useEffect(() => {
     if (forwardingMessage) {
       const forwardedContent = generateForwardedContent(forwardingMessage);
       setBodyText(forwardedContent);
 
-      // Set initial content to the contentEditable div
       if (bodyRef.current) {
         bodyRef.current.innerHTML = forwardedContent;
       }
 
-      // Load attachments from original message parts (like EmailDetail does)
       const getAttachments = (message) => {
         if (!message.parts || message.parts.length === 0) {
           return [];
@@ -74,7 +70,7 @@ const ForwardBox = ({ thread, forwardingMessage, onSend, onCancel }) => {
           size: part.bodySize || 0,
           type: part.mimeType || "application/octet-stream",
           mimeType: part.mimeType || "application/octet-stream",
-          attachmentId: part.attachmentId, // Store attachmentId for fetching
+          attachmentId: part.attachmentId,
           partId: part.partId,
         }));
         setAttachments(formattedAttachments);
@@ -94,7 +90,6 @@ const ForwardBox = ({ thread, forwardingMessage, onSend, onCancel }) => {
       minute: "2-digit",
     });
 
-    // Get the full HTML body content
     const originalBody = getEmailBodyContent(message);
 
     return `<div><br></div><div><br></div><div>---------- Forwarded message ---------</div><div>From: <strong>${fromParsed.name}</strong> &lt;${fromParsed.email}&gt;</div><div>Date: ${date}</div><div>Subject: ${message.subject}</div><div>To: ${message.to}</div><div><br></div><div>${originalBody}</div>`;
@@ -113,15 +108,12 @@ const ForwardBox = ({ thread, forwardingMessage, onSend, onCancel }) => {
     if (!bodyData) return "No content";
 
     try {
-      // If already HTML or plain text, return as is
       if (bodyData.includes("<") && bodyData.includes(">")) {
         return bodyData;
       }
 
-      // Check if it's a valid base64 string
       const base64Pattern = /^[A-Za-z0-9+/\-_]+={0,2}$/;
       if (!base64Pattern.test(bodyData.trim())) {
-        // Not base64, return as plain text
         return bodyData;
       }
 
@@ -268,10 +260,8 @@ const ForwardBox = ({ thread, forwardingMessage, onSend, onCancel }) => {
     }
   };
   function base64urlToBase64String(b64url) {
-    // Thêm padding nếu thiếu
     const padded = b64url + "=".repeat((4 - (b64url.length % 4)) % 4);
 
-    // Giải mã từ Base64URL sang bytes
     const decodedBytes = Uint8Array.from(
       atob(padded.replace(/-/g, "+").replace(/_/g, "/")),
       (c) => c.charCodeAt(0)
@@ -294,10 +284,8 @@ const ForwardBox = ({ thread, forwardingMessage, onSend, onCancel }) => {
     setIsSending(true);
 
     try {
-      // Fetch attachment data for original attachments
       const originalAttachments = attachments.filter((att) => att.attachmentId);
 
-      // Fetch data and size for each original attachment
       const originalAttachmentsWithData = await Promise.all(
         originalAttachments.map(async (att) => {
           try {
@@ -326,11 +314,11 @@ const ForwardBox = ({ thread, forwardingMessage, onSend, onCancel }) => {
 
       // Handle newly uploaded files
       const newAttachments = attachments
-        .filter((att) => att.data && !att.attachmentId) // Newly uploaded files have data but no attachmentId
+        .filter((att) => att.data && !att.attachmentId)
         .map((att) => ({
           filename: att.name,
           content_type: att.mimeType,
-          data: att.data, // Base64 encoded - only one level
+          data: att.data,
         }));
 
       console.log("New uploaded attachments:", newAttachments);
@@ -437,52 +425,12 @@ const ForwardBox = ({ thread, forwardingMessage, onSend, onCancel }) => {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  if (isMinimized) {
-    return (
-      <div className="fixed bottom-0 right-8 w-80 bg-white rounded-t-lg shadow-2xl border border-gray-300 z-50">
-        <div className="flex items-center justify-between px-4 py-3 bg-gray-100 rounded-t-lg border-b border-gray-300">
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-gray-900 truncate">
-              Forward
-            </div>
-            <div className="text-xs text-gray-600 truncate">
-              {toTags.length > 0 ? toTags.join(", ") : "New recipients"}
-            </div>
-          </div>
-          <div className="flex items-center gap-1 ml-2">
-            <button
-              onClick={() => setIsMinimized(false)}
-              className="p-1.5 hover:bg-gray-200 rounded transition-colors"
-              title="Maximize"
-            >
-              <Maximize2 className="w-4 h-4 text-gray-600" />
-            </button>
-            <button
-              onClick={onCancel}
-              className="p-1.5 hover:bg-gray-200 rounded transition-colors"
-              title="Close"
-            >
-              <X className="w-4 h-4 text-gray-600" />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="fixed bottom-0 right-8 w-[700px] bg-white rounded-t-lg shadow-2xl border border-gray-300 z-50 flex flex-col max-h-[90vh]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-gray-100 rounded-t-lg border-b border-gray-300 flex-shrink-0">
         <h3 className="text-sm font-semibold text-gray-900">Forward</h3>
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => setIsMinimized(true)}
-            className="p-1.5 hover:bg-gray-200 rounded transition-colors"
-            title="Minimize"
-          >
-            <Minimize2 className="w-4 h-4 text-gray-600" />
-          </button>
           <button
             onClick={onCancel}
             className="p-1.5 hover:bg-gray-200 rounded transition-colors"
@@ -664,7 +612,6 @@ const ForwardBox = ({ thread, forwardingMessage, onSend, onCancel }) => {
             }}
             suppressContentEditableWarning={true}
           />
-          {/* Attachments Display */}
 
           {/* Attachments Display */}
           {attachments.length > 0 && (
