@@ -203,6 +203,9 @@ const taskSlice = createSlice({
     setGoogleLabels: (state, action) => {
       state.googleLabel = action.payload;
     },
+    updateListTypes: (state, action) => {
+      state.listTypes = action.payload;
+    },
     setListTypes: (state, action) => {
       const newItems = action.payload.filter(
         (newItem) =>
@@ -238,6 +241,7 @@ export const {
   addNewListType,
   removeListType,
   updateThreadInType,
+  updateListTypes,
   moveThreadBetweenTypes,
   removeThreadFromType,
   resetAllTasks,

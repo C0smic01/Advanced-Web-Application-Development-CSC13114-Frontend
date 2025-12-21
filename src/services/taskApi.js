@@ -1,3 +1,4 @@
+import { id } from "zod/v4/locales";
 import apiClient from "./apiClient";
 
 const taskApi = {
@@ -70,6 +71,25 @@ const taskApi = {
       throw error;
     }
   },
+  updateType: async (typeId, newTypeName) => {
+    try {
+      const response = await apiClient.put(`/tasks/status`, {
+        id: typeId,
+        new_status_name: newTypeName,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteType: async (typeId) => {
+    try {
+      const response = await apiClient.delete(`/tasks/status/${typeId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
   getAllTypes: async () => {
     try {
       const response = await apiClient.get("/tasks/status");
@@ -82,6 +102,25 @@ const taskApi = {
     try {
       const response = await apiClient.get("/labels");
       return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  mapLabelToLabelGoogle: async (taskLabelId, gmailLabel) => {
+    try {
+      const response = await apiClient.post("/labels", {
+        taskLabelId,
+        gmailLabel,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteLabelMapping: async (mappingId) => {
+    try {
+      const response = await apiClient.delete(`/labels/${mappingId}`);
+      return response.data;
     } catch (error) {
       throw error;
     }

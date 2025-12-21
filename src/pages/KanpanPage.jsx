@@ -10,6 +10,7 @@ import {
   X,
   Paperclip,
   MailOpen,
+  Settings,
 } from "lucide-react";
 import EmailCard from "../components/dashboard/EmailCard";
 import Header from "../components/dashboard/Header";
@@ -19,6 +20,7 @@ import taskApi from "../services/taskApi";
 import SnoozeModal from "../components/modal/SnoozeModal";
 import { moveThreadBetweenTypes } from "../redux/taskSlice";
 import useFetchLabel from "../hooks/useFetchLabel";
+import LabelManagerModal from "../components/modal/LabelManagerModal";
 
 function DraggableItem({
   thread,
@@ -365,8 +367,11 @@ export default function EmailKanbanBoard() {
   const cardHeight = useRef(0);
   const ghostWrapperRef = useRef(null);
   const dragOffset = useRef({ x: 0, y: 0 });
-
+  const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
   const listTypes = useSelector((state) => state.tasks.listTypes);
+  const handleOpenLabelModal = () => {
+    setIsLabelModalOpen(true);
+  };
   const mails = useSelector(
     (state) => state.tasks.mails,
     (a, b) => {
@@ -931,13 +936,21 @@ export default function EmailKanbanBoard() {
 
       <main className="relative z-10 px-6 py-3 h-[calc(100vh-60px)]">
         <div className="w-full max-w-[98%] mx-auto h-full flex flex-col">
-          <div className="mb-2 flex justify-end flex-shrink-0">
+          <div className="mb-2 flex justify-end flex-shrink-0 gap-3">
             <button
               onClick={handleOpenSnoozeModal}
               className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 transform"
             >
               <Bell className="w-5 h-5 group-hover:animate-bounce" />
-              <span> Snoozed Emails</span>
+              <span>Snoozed Emails</span>
+            </button>
+
+            <button
+              onClick={handleOpenLabelModal}
+              className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-medium rounded-xl hover:from-purple-600 hover:to-indigo-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 transform"
+            >
+              <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+              <span>Quản lý Labels</span>
             </button>
           </div>
           <div className="flex-1 overflow-x-auto overflow-y-hidden pb-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
@@ -1000,6 +1013,11 @@ export default function EmailKanbanBoard() {
         onClose={() => setIsSnoozeModalOpen(false)}
         snoozeEmails={snoozeEmails}
         loading={loadingSnooze}
+      />
+
+      <LabelManagerModal
+        isOpen={isLabelModalOpen}
+        onClose={() => setIsLabelModalOpen(false)}
       />
     </div>
   );
