@@ -70,6 +70,14 @@ const taskApi = {
       throw error;
     }
   },
+  getAllTypes: async () => {
+    try {
+      const response = await apiClient.get("/tasks/status");
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default taskApi;

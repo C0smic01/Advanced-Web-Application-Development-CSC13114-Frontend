@@ -382,6 +382,8 @@ export default function EmailKanbanBoard() {
     INBOX: { icon: Mail, color: "#ef4444" },
     TODO: { icon: Clock, color: "#f59e0b" },
     DONE: { icon: CheckCircle2, color: "#22c55e" },
+    DONE2: { icon: CheckCircle2, color: "#22c55e" },
+    SNOOZED: { icon: Clock, color: "#f59e0b" },
   };
 
   const [localColumns, setLocalColumns] = useState([]);

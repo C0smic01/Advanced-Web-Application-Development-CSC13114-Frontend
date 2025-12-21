@@ -3,7 +3,8 @@ import { createSlice } from "@reduxjs/toolkit";
 const taskSlice = createSlice({
   name: "tasks",
   initialState: {
-    listTypes: ["INBOX", "TODO", "DONE"],
+    listTypes: ["INBOX", "TODO", "DONE", "DONE2", "SNOOZED"],
+    // listTypes: [],
 
     mails: [
       {
